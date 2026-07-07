@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Do'kon Hisob-kitob</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16302B;
+    --ink-2:#1E3F38;
+    --paper:#EEF2ED;
+    --card:#FFFFFF;
+    --gold:#B8860F;
+    --gold-bg:#FBF3DC;
+    --rose:#A23B3B;
+    --rose-bg:#FBEAEA;
+    --teal:#2F6F62;
+    --teal-bg:#E6F1EE;
+    --text:#182420;
+    --muted:#5F6E68;
+    --line:#DCE3DE;
+    --radius:14px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;background:var(--paper);color:var(--text);font-family:'Inter',system-ui,sans-serif;}
+  #app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative;background:var(--paper);}
+
+  header.top{
+    background:var(--ink); color:#fff; padding:18px 18px 14px;
+    position:sticky; top:0; z-index:20;
+    border-bottom-left-radius:18px; border-bottom-right-radius:18px;
+  }
+  header.top .brand{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:20px; letter-spacing:.2px; display:flex; align-items:center; gap:8px;}
+  header.top .sub{font-size:11.5px; color:#B9CCC6; margin-top:2px;}
+  header.top .rate-chip{
+    margin-top:10px; display:flex; align-items:center; justify-content:space-between;
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14);
+    border-radius:10px; padding:7px 10px; font-size:12px;
+  }
+  header.top .rate-chip input{
+    width:80px; background:transparent; border:none; color:#F6D77A; font-family:'JetBrains Mono',monospace;
+    font-weight:700; font-size:13px; text-align:right;
+  }
+  header.top .rate-chip input:focus{outline:none;}
+  header.top .rate-chip{gap:4px;}
+  header.top .rate-chip button#refreshRate{
+    margin-left:auto; background:none; border:none; color:#F6D77A; font-size:14px; cursor:pointer; padding:2px 4px;
+  }
+  .rate-status{font-size:10px; color:#8FA8A0; margin-top:5px; text-align:right;}
+
+  /* money dual-currency input */
+  .money-row{display:flex; gap:8px;}
+  .money-row input{flex:1;}
+  .cur-toggle{
+    flex:0 0 auto; border:1.5px solid var(--line); background:#FAFBFA; border-radius:10px; padding:0 14px;
+    font-weight:700; font-size:13px; color:var(--teal); cursor:pointer; font-family:'JetBrains Mono',monospace;
+  }
+  .cur-toggle.som{color:var(--gold);}
+  .conv{font-size:11px; color:var(--muted); font-weight:500;}
+  .meta-line{font-size:12px; color:var(--muted); margin-top:2px; line-height:1.5;}
+  select.field-select{width:100%; border:1.5px solid var(--line); border-radius:10px; padding:10px 12px; font-size:15px; font-family:'Inter',sans-serif; background:#FAFBFA;}
+
+  .debt-summary{display:flex; justify-content:space-between; background:var(--paper); border-radius:12px; padding:12px 14px;}
+  .debt-summary div{display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--muted);}
+  .debt-summary b{font-family:'JetBrains Mono',monospace; font-size:15px; color:var(--text);}
+  .debt-summary b.ok{color:#1E7B3C;}
+  .pay-history{max-height:150px; overflow-y:auto; margin-bottom:6px;}
+  .pay-row{display:flex; justify-content:space-between; font-size:13px; padding:8px 4px; border-bottom:1px solid var(--line);}
+  .pay-row:last-child{border-bottom:none;}
+
+  main{flex:1; padding:14px 14px 90px;}
+
+  /* ---- Dashboard tape ---- */
+  .tape{background:var(--ink-2); color:#EFEAD8; border-radius:var(--radius); padding:16px 16px 6px; margin-bottom:14px; font-family:'JetBrains Mono',monospace;}
+  .tape .tape-title{font-family:'Space Grotesk',sans-serif; font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:#9FC1B7; margin-bottom:10px;}
+  .tape-row{display:flex; justify-content:space-between; align-items:baseline; padding:7px 0; border-bottom:1px dashed rgba(239,234,216,.22); font-size:13.5px;}
+  .tape-row:last-child{border-bottom:none;}
+  .tape-row .lbl{color:#CBD9D2;}
+  .tape-row .val{font-weight:700; font-size:15px;}
+  .val.pos{color:#8FD6A8;}
+  .val.neg{color:#F0A0A0;}
+  .val.gold{color:#F6D77A;}
+
+  .kpi-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;}
+  .kpi{border-radius:var(--radius); padding:12px 13px;}
+  .kpi .k-label{font-size:11px; font-weight:600; letter-spacing:.2px;}
+  .kpi .k-val{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:19px; margin-top:6px;}
+  .kpi.rose{background:var(--rose-bg); color:var(--rose);}
+  .kpi.gold{background:var(--gold-bg); color:var(--gold);}
+  .kpi.teal{background:var(--teal-bg); color:var(--teal);}
+  .kpi.ink{background:#E4E9E6; color:var(--ink);}
+
+  .section-label{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin:18px 0 8px 2px;}
+
+  /* ---- Cards / list ---- */
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px; margin-bottom:9px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .card .main{flex:1; min-width:0;}
+  .card .title{font-weight:600; font-size:14.5px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .card .meta{font-size:12px; color:var(--muted); margin-top:3px;}
+  .card .amt{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:15px; text-align:right; white-space:nowrap;}
+  .card .amt.small{font-size:12px; font-weight:500; color:var(--muted);}
+  .card .del{border:none; background:none; color:#C08A8A; font-size:17px; padding:4px 2px; cursor:pointer;}
+  .empty{text-align:center; color:var(--muted); font-size:13px; padding:30px 10px;}
+
+  .total-bar{display:flex; justify-content:space-between; align-items:center; background:var(--ink); color:#fff; border-radius:var(--radius); padding:13px 15px; margin-top:12px; font-family:'JetBrains Mono',monospace;}
+  .total-bar .t-label{font-family:'Inter',sans-serif; font-size:12.5px; color:#B9CCC6; font-weight:500;}
+  .total-bar .t-val{font-weight:700; font-size:17px;}
+
+  /* ---- Bottom nav ---- */
+  nav.bottom{
+    position:fixed; bottom:0; left:0; right:0; z-index:30;
+    display:flex; justify-content:center;
+  }
+  nav.bottom .inner{
+    max-width:480px; width:100%; background:var(--ink); display:flex;
+    border-top-left-radius:18px; border-top-right-radius:18px;
+    padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+    box-shadow:0 -4px 18px rgba(0,0,0,.18);
+  }
+  nav.bottom button{
+    flex:1; background:none; border:none; color:#8FA8A0; padding:6px 2px; font-family:'Inter',sans-serif;
+    display:flex; flex-direction:column; align-items:center; gap:3px; font-size:10px; cursor:pointer;
+  }
+  nav.bottom button .ic{font-size:18px;}
+  nav.bottom button.active{color:#F6D77A;}
+
+  /* ---- FAB ---- */
+  .fab{
+    position:fixed; right:calc(50% - 240px + 18px); bottom:88px; z-index:25;
+    width:54px; height:54px; border-radius:50%; background:var(--gold); color:#fff; border:none;
+    font-size:26px; box-shadow:0 6px 16px rgba(184,134,15,.4); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  @media (max-width:480px){ .fab{ right:18px; } }
+
+  /* ---- Modal ---- */
+  .overlay{position:fixed; inset:0; background:rgba(20,30,27,.5); z-index:40; display:none; align-items:flex-end; justify-content:center;}
+  .overlay.show{display:flex;}
+  .sheet{background:#fff; width:100%; max-width:480px; border-top-left-radius:20px; border-top-right-radius:20px; padding:18px 18px calc(18px + env(safe-area-inset-bottom)); max-height:85vh; overflow-y:auto;}
+  .sheet h3{font-family:'Space Grotesk',sans-serif; margin:0 0 14px; font-size:17px; color:var(--ink);}
+  .field{margin-bottom:12px;}
+  .field label{display:block; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:5px;}
+  .field input{width:100%; border:1.5px solid var(--line); border-radius:10px; padding:10px 12px; font-size:15px; font-family:'Inter',sans-serif; background:#FAFBFA;}
+  .field input:focus{outline:none; border-color:var(--teal);}
+  .sheet-actions{display:flex; gap:10px; margin-top:16px;}
+  .btn{flex:1; border:none; border-radius:10px; padding:12px; font-weight:600; font-size:14.5px; cursor:pointer; font-family:'Inter',sans-serif;}
+  .btn.primary{background:var(--teal); color:#fff;}
+  .btn.ghost{background:var(--paper); color:var(--muted);}
+  .hint{font-size:11px; color:var(--muted); margin-top:-4px; margin-bottom:14px; line-height:1.4;}
+  .badge-shared{font-size:10px; background:rgba(255,255,255,.1); color:#9FC1B7; padding:3px 8px; border-radius:20px; margin-left:6px;}
+
+  /* ---- Auth screen ---- */
+  .auth-screen{min-height:100vh; background:var(--ink); display:flex; align-items:center; justify-content:center; padding:24px;}
+  .auth-card{background:var(--card); border-radius:20px; padding:28px 24px; width:100%; max-width:360px; box-shadow:0 12px 30px rgba(0,0,0,.25);}
+  .auth-logo{font-size:36px; text-align:center; margin-bottom:4px;}
+  .auth-card h2{font-family:'Space Grotesk',sans-serif; text-align:center; margin:0 0 4px; font-size:19px; color:var(--ink);}
+  .auth-card .auth-sub{text-align:center; font-size:12px; color:var(--muted); margin-bottom:18px;}
+  .auth-card .field input{background:#FAFBFA;}
+  .auth-error{background:var(--rose-bg); color:var(--rose); font-size:12.5px; padding:9px 12px; border-radius:10px; margin-bottom:12px;}
+  .auth-toggle{text-align:center; font-size:12.5px; color:var(--teal); margin-top:14px; cursor:pointer; font-weight:600;}
+  .logout-btn{background:none; border:none; color:#9FC1B7; font-size:11px; cursor:pointer; padding:0; text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">🏪</div>
+    <h2>Do'kon Hisob-kitob</h2>
+    <div class="auth-sub" id="authSub">Yuklanmoqda...</div>
+    <div id="authMode"></div>
+  </div>
+</div>
+
+<div id="app" style="display:none;">
+
+  <header class="top">
+    <div class="brand">🏪 Do'kon Hisob-kitob <span class="badge-shared" id="syncBadge">•••</span></div>
+    <div class="sub" id="pageSub">Bosh sahifa</div>
+    <div class="sub" style="margin-top:2px;">👤 <span id="whoAmI"></span> · <button class="logout-btn" id="logoutBtn">chiqish</button></div>
+    <div class="rate-chip">
+      <span>💱 1$ =</span>
+      <input id="rateInput" type="number" inputmode="decimal" value="12000">
+      <span>so'm</span>
+      <button id="refreshRate" title="Kursni yangilash">🔄</button>
+    </div>
+    <div class="rate-status" id="rateStatus">kurs yuklanmoqda...</div>
+  </header>
+
+
+  <main id="main"></main>
+
+  <button class="fab" id="fabBtn">＋</button>
+
+  <nav class="bottom">
+    <div class="inner" id="navInner">
+      <button data-tab="dash" class="active"><span class="ic">🏠</span>Bosh</button>
+      <button data-tab="xarajat"><span class="ic">💸</span>Xarajat</button>
+      <button data-tab="foyda"><span class="ic">📈</span>Foyda</button>
+      <button data-tab="qarz"><span class="ic">🧾</span>Qarz</button>
+      <button data-tab="ishhaqi"><span class="ic">👥</span>Ish haqi</button>
+      <button data-tab="reviziya"><span class="ic">📦</span>Reviziya</button>
+    </div>
+  </nav>
+
+  <div class="overlay" id="overlay">
+    <div class="sheet" id="sheet"></div>
+  </div>
+
+</div>
+
+<script>
+/* ================================================================
+   GOOGLE SHEETS BACKEND CONFIG
+   1) Deploy the included Apps Script (Code.gs) as a Web App.
+   2) Paste the Web App URL below between the quotes.
+   See README.md for the full step-by-step guide.
+================================================================ */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcpgge77OjdjaAb0IpskyAs6twUby9eWerorsf3Qy-r1AW3zWHDESjMPXvrA671Zb-eQ/exec";
+
+/* ---------------- Storage layer (Google Sheets, shared across all employees) ---------------- */
+async function sheetGetAll(){
+  if(!SCRIPT_URL || SCRIPT_URL.includes('PASTE_YOUR')) { showSetupWarning(); return {}; }
+  try{
+    const res = await fetch(SCRIPT_URL);
+    return await res.json(); // { key: "jsonString", ... }
+  }catch(e){
+    console.error('Google Sheet bilan bog\'lanib bo\'lmadi', e);
+    return {};
+  }
+}
+async function sheetSet(key, value){
+  if(!SCRIPT_URL || SCRIPT_URL.includes('PASTE_YOUR')) { showSetupWarning(); return false; }
+  try{
+    // text/plain avoids a CORS preflight request, which Apps Script cannot answer
+    await fetch(SCRIPT_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ key, value })
+    });
+    return true;
+  }catch(e){
+    console.error('Google Sheetga yozib bo\'lmadi', e);
+    return false;
+  }
+}
+function showSetupWarning(){
+  const b = document.getElementById('syncBadge');
+  if(b) b.textContent = '⚠ Sheet ulanmagan';
+  console.warn("SCRIPT_URL sozlanmagan. README.md dagi ko'rsatmaga qarang.");
+}
+
+async function loadState(){
+  const all = await sheetGetAll();
+  const keys = ['rate','xarajat','foyda','qarz','ishhaqi','reviziya'];
+  const result = {};
+  for(const k of keys){
+    try{
+      result[k] = all[k] ? JSON.parse(all[k]) : (k==='rate' ? 12000 : []);
+    }catch(e){
+      result[k] = (k==='rate' ? 12000 : []);
+    }
+  }
+  return result;
+}
+async function saveKey(key, value){
+  const ok = await sheetSet(key, JSON.stringify(value));
+  flashSync(ok);
+}
+function flashSync(ok){
+  const b = document.getElementById('syncBadge');
+  b.textContent = ok ? '✓ saqlandi' : '⚠ xato';
+  setTimeout(()=>{ b.textContent = '👥 umumiy'; }, 1400);
+}
+
+let state = { rate:12000, xarajat:[], foyda:[], qarz:[], ishhaqi:[], reviziya:[] };
+let activeTab = 'dash';
+
+const fmtUsd = (n)=> '$' + (Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtSom = (n)=> Math.round(Number(n)||0).toLocaleString('en-US') + " so'm";
+const uid = ()=> Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+/* value entered by user in its own currency -> always converted to USD for totals/reports */
+function toUsd(value, cur){ return cur==='som' ? (Number(value)||0)/(state.rate||1) : (Number(value)||0); }
+/* small "entered as X, ≈ Y" line for a money field */
+function moneyDisplay(value, cur){
+  value = Number(value)||0;
+  if(cur==='som'){ return `${fmtSom(value)} <span class="conv">≈ ${fmtUsd(value/(state.rate||1))}</span>`; }
+  return `${fmtUsd(value)} <span class="conv">≈ ${fmtSom(value*(state.rate||1))}</span>`;
+}
+
+/* ---------------- Module configs ---------------- */
+/* money fields carry {key,label,type:'number',money:true,defCur:'usd'|'som',ph}
+   plain fields: type 'text' | 'number' | 'select' (with options) */
+const MODULES = {
+  xarajat:{
+    title:'Xarajatlar', icon:'💸', color:'rose',
+    fields:[
+      {key:'tavsif', label:'Tavsif (nima uchun)', type:'text', ph:'Masalan: Ijara to\'lovi'},
+      {key:'toifa', label:'Toifa', type:'text', ph:'Ijara / Kommunal / boshqa'},
+      {key:'summa', label:'Summa', type:'number', money:true, defCur:'usd'},
+    ],
+    render(item){
+      const usd = toUsd(item.summa, item.summa_cur);
+      return { title:item.tavsif||'—', metaLines:[item.toifa||'', moneyDisplay(item.summa, item.summa_cur)], amt:fmtUsd(usd) };
+    },
+    total(list){ return list.reduce((s,i)=>s+toUsd(i.summa,i.summa_cur),0); },
+    totalLabel:'Jami xarajat'
+  },
+  foyda:{
+    title:'Foyda (savdolar)', icon:'📈', color:'gold',
+    fields:[
+      {key:'nomi', label:'Tovar / savdo nomi', type:'text', ph:'Masalan: Non savdosi'},
+      {key:'soni', label:'Soni (dona)', type:'number', ph:'0'},
+      {key:'sotuv', label:'Sotuv narxi - birlik', type:'number', money:true, defCur:'usd'},
+      {key:'tannarx', label:'Tannarx narxi - birlik', type:'number', money:true, defCur:'usd'},
+      {key:'sabab', label:'Sabab (ixtiyoriy)', type:'text', ph:''},
+    ],
+    render(item){
+      const soni=Number(item.soni)||0;
+      const sotuvUsd = soni*toUsd(item.sotuv,item.sotuv_cur);
+      const tannarxUsd = soni*toUsd(item.tannarx,item.tannarx_cur);
+      const foydaUsd = sotuvUsd - tannarxUsd;
+      return { title:item.nomi||'—', metaLines:[
+        `${soni} dona`,
+        `sotuv: ${moneyDisplay(item.sotuv,item.sotuv_cur)}`,
+        `tannarx: ${moneyDisplay(item.tannarx,item.tannarx_cur)}`
+      ], amt:fmtUsd(foydaUsd) };
+    },
+    total(list){ return list.reduce((s,i)=>{ const soni=Number(i.soni)||0; return s + soni*toUsd(i.sotuv,i.sotuv_cur) - soni*toUsd(i.tannarx,i.tannarx_cur); },0); },
+    totalLabel:'Yalpi foyda'
+  },
+  qarz:{
+    title:'Qarzdorlar', icon:'🧾', color:'rose',
+    fields:[
+      {key:'ism', label:'Mijoz ismi', type:'text', ph:'Ism familiya'},
+      {key:'qarz', label:'Qarz summasi', type:'number', money:true, defCur:'usd'},
+    ],
+    paidUsd(item){
+      if(Array.isArray(item.tolovlar) && item.tolovlar.length){
+        return item.tolovlar.reduce((s,p)=>s+toUsd(p.amount,p.cur),0);
+      }
+      // backward-compat with older single-field entries
+      return item.tolangan!==undefined ? toUsd(item.tolangan, item.tolangan_cur) : 0;
+    },
+    render(item){
+      const paidUsd = MODULES.qarz.paidUsd(item);
+      const qoldiqUsd = toUsd(item.qarz,item.qarz_cur) - paidUsd;
+      const n = (item.tolovlar||[]).length;
+      return { title:item.ism||'—', metaLines:[
+        `qarz: ${moneyDisplay(item.qarz,item.qarz_cur)}`,
+        `to'langan: ${fmtUsd(paidUsd)}${n? ` (${n} ta to'lov)` : ''}`,
+        `👉 to'lov qo'shish uchun bosing`
+      ], amt:fmtUsd(qoldiqUsd) };
+    },
+    total(list){ return list.reduce((s,i)=>s+toUsd(i.qarz,i.qarz_cur)-MODULES.qarz.paidUsd(i),0); },
+    totalLabel:'Jami qoldiq qarz'
+  },
+  ishhaqi:{
+    title:'Ish haqi', icon:'👥', color:'teal',
+    fields:[
+      {key:'ism', label:'Xodim ismi', type:'text', ph:'Ism familiya'},
+      {key:'oklad', label:"Oylik oklad", type:'number', money:true, defCur:'som'},
+      {key:'bonus_pct', label:'KPI bonus (%)', type:'number', ph:'0'},
+    ],
+    render(item){
+      const okladUsd = toUsd(item.oklad,item.oklad_cur);
+      const jamiUsd = okladUsd * (1 + (Number(item.bonus_pct)||0)/100);
+      return { title:item.ism||'—', metaLines:[
+        `oklad: ${moneyDisplay(item.oklad,item.oklad_cur)}`,
+        `bonus: ${item.bonus_pct||0}%`
+      ], amt:fmtUsd(jamiUsd) };
+    },
+    total(list){ return list.reduce((s,i)=>s+toUsd(i.oklad,i.oklad_cur)*(1+(Number(i.bonus_pct)||0)/100),0); },
+    totalLabel:'Jami ish haqi fondi'
+  },
+  reviziya:{
+    title:'Reviziya (ombor)', icon:'📦', color:'teal',
+    fields:[
+      {key:'nomi', label:'Tovar nomi', type:'text', ph:'Tovar nomi'},
+      {key:'miqdor', label:'Qolgan miqdor (dona)', type:'number', ph:'0'},
+      {key:'narx', label:'Birlik narxi', type:'number', money:true, defCur:'usd'},
+    ],
+    render(item){
+      const summaUsd = (Number(item.miqdor)||0)*toUsd(item.narx,item.narx_cur);
+      return { title:item.nomi||'—', metaLines:[
+        `${item.miqdor||0} dona`,
+        `narxi: ${moneyDisplay(item.narx,item.narx_cur)}`
+      ], amt:fmtUsd(summaUsd) };
+    },
+    total(list){ return list.reduce((s,i)=>s+(Number(i.miqdor)||0)*toUsd(i.narx,i.narx_cur),0); },
+    totalLabel:'Jami qoldiq summasi'
+  }
+};
+
+/* ---------------- Rendering ---------------- */
+function renderDashboard(){
+  const jamiXarajat = MODULES.xarajat.total(state.xarajat);
+  const yalpiFoyda = MODULES.foyda.total(state.foyda);
+  const sofFoyda = yalpiFoyda - jamiXarajat;
+  const qoldiqQarz = MODULES.qarz.total(state.qarz);
+  const ishHaqiFond = MODULES.ishhaqi.total(state.ishhaqi);
+  const reviziyaSum = MODULES.reviziya.total(state.reviziya);
+
+  return `
+    <div class="tape">
+      <div class="tape-title">📋 Umumiy hisobot</div>
+      <div class="tape-row"><span class="lbl">Jami xarajat</span><span class="val neg">${fmtUsd(jamiXarajat)}</span></div>
+      <div class="tape-row"><span class="lbl">Yalpi foyda</span><span class="val pos">${fmtUsd(yalpiFoyda)}</span></div>
+      <div class="tape-row"><span class="lbl">Sof foyda (xarajatdan keyin)</span><span class="val ${sofFoyda>=0?'pos':'neg'}">${fmtUsd(sofFoyda)}</span></div>
+      <div class="tape-row"><span class="lbl">Qarzdorlik qoldig'i</span><span class="val gold">${fmtUsd(qoldiqQarz)}</span></div>
+      <div class="tape-row"><span class="lbl">Ish haqi fondi</span><span class="val gold">${fmtUsd(ishHaqiFond)}</span></div>
+      <div class="tape-row"><span class="lbl">Ombordagi tovar qoldig'i</span><span class="val">${fmtUsd(reviziyaSum)}</span></div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi rose"><div class="k-label">💸 Xarajat</div><div class="k-val">${fmtUsd(jamiXarajat)}</div></div>
+      <div class="kpi gold"><div class="k-label">📈 Foyda</div><div class="k-val">${fmtUsd(yalpiFoyda)}</div></div>
+      <div class="kpi ink"><div class="k-label">⚖️ Sof natija</div><div class="k-val">${fmtUsd(sofFoyda)}</div></div>
+      <div class="kpi teal"><div class="k-label">🧾 Qarzdorlik</div><div class="k-val">${fmtUsd(qoldiqQarz)}</div></div>
+    </div>
+    <div class="section-label">Bo'limlar bo'yicha yozuvlar soni</div>
+    <div class="card"><div class="main"><div class="title">💸 Xarajat</div></div><div class="amt small">${state.xarajat.length} ta</div></div>
+    <div class="card"><div class="main"><div class="title">📈 Foyda</div></div><div class="amt small">${state.foyda.length} ta</div></div>
+    <div class="card"><div class="main"><div class="title">🧾 Qarzdorlar</div></div><div class="amt small">${state.qarz.length} ta</div></div>
+    <div class="card"><div class="main"><div class="title">👥 Ish haqi</div></div><div class="amt small">${state.ishhaqi.length} ta</div></div>
+    <div class="card"><div class="main"><div class="title">📦 Reviziya</div></div><div class="amt small">${state.reviziya.length} ta</div></div>
+  `;
+}
+
+function renderModule(key){
+  const mod = MODULES[key];
+  const list = state[key];
+  const items = list.length ? list.map(item=>{
+    const r = mod.render(item);
+    const metaHtml = (r.metaLines||[]).filter(Boolean).map(l=>`<div class="meta-line">${l}</div>`).join('');
+    const clickAttr = key==='qarz' ? `data-open-debt="${item._id}"` : '';
+    return `<div class="card" ${clickAttr} style="${key==='qarz'?'cursor:pointer;':''}">
+      <div class="main">
+        <div class="title">${r.title}</div>
+        ${metaHtml}
+      </div>
+      <div class="amt">${r.amt}</div>
+      <button class="del" data-del="${key}:${item._id}">✕</button>
+    </div>`;
+  }).join('') : `<div class="empty">Hozircha yozuv yo'q.<br>Pastdagi ＋ tugmasi orqali qo'shing.</div>`;
+
+  const total = mod.total(list); // always USD - overall report stays in dollars
+  return `
+    <div class="section-label">${mod.icon} ${mod.title}</div>
+    ${items}
+    <div class="total-bar"><span class="t-label">${mod.totalLabel} ($)</span><span class="t-val">${fmtUsd(total)}</span></div>
+  `;
+}
+
+function render(){
+  const main = document.getElementById('main');
+  const sub = document.getElementById('pageSub');
+  if(activeTab==='dash'){ sub.textContent='Bosh sahifa · umumiy holat'; main.innerHTML = renderDashboard(); }
+  else { sub.textContent = MODULES[activeTab].title; main.innerHTML = renderModule(activeTab); }
+
+  document.querySelectorAll('#navInner button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tab===activeTab);
+  });
+  document.getElementById('fabBtn').style.display = activeTab==='dash' ? 'none':'flex';
+
+  main.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.addEventListener('click', async (e)=>{
+      e.stopPropagation();
+      const [key,id] = e.currentTarget.dataset.del.split(':');
+      if(!confirm("Bu yozuvni butunlay o'chirasizmi?")) return;
+      state[key] = state[key].filter(i=>i._id!==id);
+      await saveKey(key, state[key]);
+      render();
+    });
+  });
+
+  main.querySelectorAll('[data-open-debt]').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      openDebtSheet(card.dataset.openDebt);
+    });
+  });
+}
+
+/* ---------------- Add-entry modal ---------------- */
+function fieldHtml(f){
+  if(f.type==='select'){
+    return `<div class="field">
+      <label>${f.label}</label>
+      <select class="field-select" data-f="${f.key}">
+        ${f.options.map(o=>`<option value="${o}">${o}</option>`).join('')}
+      </select>
+    </div>`;
+  }
+  if(f.money){
+    const curTxt = f.defCur==='som' ? "so'm" : '$';
+    return `<div class="field">
+      <label>${f.label}</label>
+      <div class="money-row">
+        <input data-f="${f.key}" type="number" inputmode="decimal" placeholder="0.00">
+        <button type="button" class="cur-toggle ${f.defCur==='som'?'som':''}" data-cur-btn="${f.key}" data-cur="${f.defCur}">${curTxt}</button>
+      </div>
+    </div>`;
+  }
+  return `<div class="field">
+    <label>${f.label}</label>
+    <input data-f="${f.key}" type="${f.type==='number'?'number':'text'}" ${f.type==='number'?'inputmode="decimal"':''} placeholder="${f.ph||''}">
+  </div>`;
+}
+
+function openDebtSheet(id){
+  const item = state.qarz.find(i=>i._id===id);
+  if(!item) return;
+  const sheet = document.getElementById('sheet');
+
+  const paidUsd = MODULES.qarz.paidUsd(item);
+  const debtUsd = toUsd(item.qarz, item.qarz_cur);
+  const qoldiqUsd = debtUsd - paidUsd;
+  const payments = item.tolovlar || [];
+
+  const historyHtml = payments.length ? payments.slice().reverse().map(p=>`
+    <div class="pay-row">
+      <span>${p.sana||''} · ${p.tur||'—'}</span>
+      <span>${p.cur==='som' ? fmtSom(p.amount) : fmtUsd(p.amount)}</span>
+    </div>
+  `).join('') : `<div class="hint" style="margin-top:0;">Hali to'lov qilinmagan.</div>`;
+
+  sheet.innerHTML = `
+    <h3>🧾 ${item.ism || 'Mijoz'}</h3>
+    <div class="debt-summary">
+      <div><span>Qarz</span><b>${moneyDisplay(item.qarz, item.qarz_cur)}</b></div>
+      <div><span>To'langan</span><b>${fmtUsd(paidUsd)}</b></div>
+      <div><span>Qoldiq</span><b class="${qoldiqUsd<=0?'ok':''}">${fmtUsd(qoldiqUsd)}</b></div>
+    </div>
+
+    <div class="section-label" style="margin-top:16px;">To'lovlar tarixi</div>
+    <div class="pay-history">${historyHtml}</div>
+
+    <div class="section-label">Yangi to'lov qo'shish</div>
+    <div class="field">
+      <label>To'langan summa</label>
+      <div class="money-row">
+        <input id="payAmount" type="number" inputmode="decimal" placeholder="0.00">
+        <button type="button" class="cur-toggle" id="payCurBtn" data-cur="usd">$</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>To'lov turi</label>
+      <select class="field-select" id="payTur">
+        <option>Naqd</option>
+        <option>Karta</option>
+      </select>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn ghost" id="cancelBtn">Yopish</button>
+      <button class="btn primary" id="addPayBtn">To'lovni qo'shish</button>
+    </div>
+  `;
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('cancelBtn').onclick = closeSheet;
+
+  const curBtn = document.getElementById('payCurBtn');
+  curBtn.addEventListener('click', ()=>{
+    const cur = curBtn.dataset.cur==='usd' ? 'som' : 'usd';
+    curBtn.dataset.cur = cur;
+    curBtn.textContent = cur==='som' ? "so'm" : '$';
+    curBtn.classList.toggle('som', cur==='som');
+  });
+
+  document.getElementById('addPayBtn').onclick = async ()=>{
+    const amount = parseFloat(document.getElementById('payAmount').value) || 0;
+    if(amount<=0){ alert("To'lov summasini kiriting"); return; }
+    const cur = curBtn.dataset.cur;
+    const tur = document.getElementById('payTur').value;
+    if(!Array.isArray(item.tolovlar)) item.tolovlar = [];
+    item.tolovlar.push({ id: uid(), amount, cur, tur, sana: new Date().toISOString().slice(0,10) });
+    await saveKey('qarz', state.qarz);
+    openDebtSheet(id); // refresh sheet with updated history
+    render();
+  };
+}
+
+function openAddSheet(){
+  const mod = MODULES[activeTab];
+  if(!mod) return;
+  const sheet = document.getElementById('sheet');
+  sheet.innerHTML = `
+    <h3>${mod.icon} Yangi yozuv — ${mod.title}</h3>
+    <div class="hint">Har bir summani $ yoki so'm holida kiritish mumkin — tugmani bosib valyutani almashtiring. Umumiy hisobotda hammasi avtomatik dollarga aylantiriladi.</div>
+    ${mod.fields.map(fieldHtml).join('')}
+    <div class="sheet-actions">
+      <button class="btn ghost" id="cancelBtn">Bekor qilish</button>
+      <button class="btn primary" id="saveBtn">Saqlash</button>
+    </div>
+  `;
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('cancelBtn').onclick = closeSheet;
+
+  sheet.querySelectorAll('[data-cur-btn]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const cur = btn.dataset.cur==='usd' ? 'som' : 'usd';
+      btn.dataset.cur = cur;
+      btn.textContent = cur==='som' ? "so'm" : '$';
+      btn.classList.toggle('som', cur==='som');
+    });
+  });
+
+  document.getElementById('saveBtn').onclick = async ()=>{
+    const item = { _id: uid() };
+    mod.fields.forEach(f=>{
+      if(f.type==='select'){
+        item[f.key] = sheet.querySelector(`[data-f="${f.key}"]`).value;
+        return;
+      }
+      const val = sheet.querySelector(`[data-f="${f.key}"]`).value;
+      item[f.key] = f.type==='number' ? (parseFloat(val)||0) : val;
+      if(f.money){
+        item[f.key+'_cur'] = sheet.querySelector(`[data-cur-btn="${f.key}"]`).dataset.cur;
+      }
+    });
+    state[activeTab] = [item, ...state[activeTab]];
+    await saveKey(activeTab, state[activeTab]);
+    closeSheet();
+    render();
+  };
+}
+function closeSheet(){ document.getElementById('overlay').classList.remove('show'); }
+
+document.getElementById('overlay').addEventListener('click', (e)=>{
+  if(e.target.id==='overlay') closeSheet();
+});
+document.getElementById('fabBtn').addEventListener('click', openAddSheet);
+
+document.querySelectorAll('#navInner button').forEach(b=>{
+  b.addEventListener('click', ()=>{ activeTab=b.dataset.tab; render(); });
+});
+
+/* ---------------- Exchange rate (auto) ---------------- */
+const rateInput = document.getElementById('rateInput');
+const rateStatus = document.getElementById('rateStatus');
+const refreshBtn = document.getElementById('refreshRate');
+
+async function fetchLiveRate(){
+  try{
+    const res = await fetch('https://open.er-api.com/v6/latest/USD');
+    const data = await res.json();
+    if(data && data.result==='success' && data.rates && data.rates.UZS){
+      return Math.round(data.rates.UZS);
+    }
+  }catch(e){ console.warn('Kurs olinmadi (internet yoki API muammosi)', e); }
+  return null;
+}
+
+function timeNow(){
+  return new Date().toLocaleTimeString('uz-UZ',{hour:'2-digit',minute:'2-digit'});
+}
+
+async function refreshRate(showLoading){
+  if(showLoading) rateStatus.textContent = 'yangilanmoqda...';
+  const live = await fetchLiveRate();
+  if(live){
+    state.rate = live;
+    rateInput.value = live;
+    await saveKey('rate', state.rate);
+    rateStatus.textContent = `avtomatik kurs · yangilandi ${timeNow()}`;
+  } else {
+    rateStatus.textContent = `oflayn · oxirgi saqlangan kurs (${timeNow()})`;
+  }
+  render();
+}
+
+rateInput.addEventListener('change', async ()=>{
+  state.rate = parseFloat(rateInput.value)||12000;
+  rateStatus.textContent = `qo'lda kiritilgan kurs · ${timeNow()}`;
+  await saveKey('rate', state.rate);
+  render();
+});
+refreshBtn.addEventListener('click', ()=>refreshRate(true));
+
+/* ---------------- Auth (shared login for all employees) ---------------- */
+let usersList = [];
+let currentUser = null;
+let authShowingRegister = false;
+
+async function sha256(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function loadUsers(){
+  const all = await sheetGetAll();
+  try{ return all.users ? JSON.parse(all.users) : []; }
+  catch(e){ return []; }
+}
+async function saveUsers(list){
+  await sheetSet('users', JSON.stringify(list));
+}
+
+function renderAuth(errorMsg){
+  const sub = document.getElementById('authSub');
+  const box = document.getElementById('authMode');
+  const firstTime = usersList.length===0;
+
+  if(firstTime || authShowingRegister){
+    sub.textContent = firstTime
+      ? "Birinchi marta ishga tushirilmoqda — birinchi hisobni yarating"
+      : "Yangi xodim uchun hisob yaratish";
+    box.innerHTML = `
+      ${errorMsg? `<div class="auth-error">${errorMsg}</div>` : ''}
+      <div class="field"><label>Ism</label><input id="regName" type="text" placeholder="Ism familiya"></div>
+      <div class="field"><label>Login</label><input id="regLogin" type="text" placeholder="login yarating" autocomplete="off"></div>
+      <div class="field"><label>Parol</label><input id="regPass" type="password" placeholder="kamida 4 ta belgi"></div>
+      <button class="btn primary" id="regBtn" style="width:100%;">Hisob yaratish va kirish</button>
+      ${firstTime ? '' : `<div class="auth-toggle" id="toLogin">Hisobim bor — kirish</div>`}
+    `;
+    document.getElementById('regBtn').onclick = async ()=>{
+      const ism = document.getElementById('regName').value.trim();
+      const login = document.getElementById('regLogin').value.trim().toLowerCase();
+      const pass = document.getElementById('regPass').value;
+      if(!ism || !login || pass.length<4){ renderAuth("Barcha maydonlarni to'ldiring (parol kamida 4 belgi)"); return; }
+      if(usersList.some(u=>u.login===login)){ renderAuth('Bu login band, boshqasini tanlang'); return; }
+      const hash = await sha256(pass);
+      usersList.push({ login, hash, ism });
+      await saveUsers(usersList);
+      currentUser = { login, ism };
+      enterApp();
+    };
+    if(!firstTime) document.getElementById('toLogin').onclick = ()=>{ authShowingRegister=false; renderAuth(); };
+  } else {
+    sub.textContent = "Do'kon xodimlari uchun umumiy kirish";
+    box.innerHTML = `
+      ${errorMsg? `<div class="auth-error">${errorMsg}</div>` : ''}
+      <div class="field"><label>Login</label><input id="loginInput" type="text" placeholder="login" autocomplete="off"></div>
+      <div class="field"><label>Parol</label><input id="passInput" type="password" placeholder="parol"></div>
+      <button class="btn primary" id="loginBtn" style="width:100%;">Kirish</button>
+      <div class="auth-toggle" id="toRegister">Yangi xodimman — hisob yaratish</div>
+    `;
+    document.getElementById('loginBtn').onclick = async ()=>{
+      const login = document.getElementById('loginInput').value.trim().toLowerCase();
+      const pass = document.getElementById('passInput').value;
+      const user = usersList.find(u=>u.login===login);
+      if(!user){ renderAuth('Bunday login topilmadi'); return; }
+      const hash = await sha256(pass);
+      if(hash!==user.hash){ renderAuth("Parol noto'g'ri"); return; }
+      currentUser = { login: user.login, ism: user.ism };
+      enterApp();
+    };
+    document.getElementById('toRegister').onclick = ()=>{ authShowingRegister=true; renderAuth(); };
+  }
+}
+
+function enterApp(){
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('whoAmI').textContent = currentUser.ism || currentUser.login;
+  startApp();
+}
+
+document.getElementById('logoutBtn').addEventListener('click', ()=>{
+  currentUser = null;
+  authShowingRegister = false;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('authScreen').style.display = 'flex';
+  renderAuth();
+});
+
+/* ---------------- App start (after login) ---------------- */
+async function startApp(){
+  state = await loadState();
+  rateInput.value = state.rate;
+  activeTab = 'dash';
+  render();
+  refreshRate(false);
+  setInterval(()=>refreshRate(false), 30*60*1000);
+}
+
+/* ---------------- Boot ---------------- */
+(async ()=>{
+  usersList = await loadUsers();
+  renderAuth();
+})();
+</script>
+</body>
+</html>
